@@ -1,0 +1,27 @@
+{
+  "ConnectionStrings": {
+    "OracleDb": "User Id=YOUR_USER;Password=YOUR_PASSWORD;Data Source=YOUR_SERVER"
+  },
+  "Kestrel": {
+    "Endpoints": {
+      "HttpDefault": {
+        "Url": "http://0.0.0.0:1771"
+      }
+    }
+  },
+  "Startup": {
+    "RunRawDbCheck": true,
+    "PollingInterval": 5,
+    "ChannelCapacity": 20,
+    "SignalRHub": "/hub",
+    "SseEvents": "/events"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning",
+      "Microsoft.EntityFrameworkCore": "Warning",
+      "Microsoft.EntityFrameworkCore.Database.Command": "Warning"
+    }
+  }
+}

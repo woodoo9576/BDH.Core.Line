@@ -1,0 +1,219 @@
+﻿@page "/queue"
+@using System.Collections.Concurrent
+@using System.Globalization
+@using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.JSInterop
+@inject NavigationManager NavigationManager
+@inject IJSRuntime Js
+
+<div class="row g-4 mt-2">
+    @foreach (var a in _statuses.Values)
+    {
+        //var highlight = _highlighted.Contains(a.UnitName) ? "highlight" : "";
+        var highlight = _highlighted.ContainsKey(a.UnitName) ? "highlight" : ""; //threadSafe
+        var gender = a.ResponsibleStaffGender;
+        var responsibleStaffGenderUrl = gender == "E"
+            ? "img/male.png"
+            : "img/female.png";
+        <div class="@_cardSize d-flex">
+            <div class="card appointment-card w-100">
+                <div class="card-body d-flex flex-column justify-content-between p-3 h-100">
+                    <!-- Üst Bölüm -->
+                    <div class="d-flex align-items-center mb-2">
+                        <img src="@responsibleStaffGenderUrl" class="rounded-circle me-3 doctor-img" alt="Doctor"/>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0 fw-semibold text-white text-nowrap">@ToTitleCase(a.ResponsibleStaff)</h6>
+                            <small class="text-white-50 text-nowrap">@ToTitleCase(a.UnitName)</small>
+                        </div>
+                        @* <a href="#" class="btn btn-outline-light btn-sm ms-2">View</a> *@
+                        <button type="button" class="btn btn-outline-light btn-sm ms-2 rounded-circle p-2">
+                            <i class="bi bi-person-badge"></i>
+                        </button>
+                    </div>
+
+                    <hr class="my-2 border-white-50"/>
+
+                    <!-- Alt Bölüm -->
+                    <div class="text-white">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar3 me-2"></i>
+                                <span>@a.LastCalledTickedTime.ToString("dd/MM/yyyy")</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-clock me-2"></i>
+                                <span>@a.LastCalledTickedTime.ToString("HH:mm:ss")</span>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <div>
+                                <small class="text-white-50">No:</small>
+                                <div>
+                                    <span class="badge bg-light text-primary rounded-pill px-3 py-2 fw-semibold ticket-pill fs-4 @highlight">@a.LastCalledTicketNumber</span>
+                                </div>
+                            </div>
+                            <div>
+                                <small class="text-white-50">Hasta:</small>
+                                <div>
+                                    <span class="badge bg-light bg-opacity-25 text-primary rounded-pill px-3 py-2 fw-semibold ticket-pill fs-4 @highlight">@MaskName(a.LastCalledPatientName)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private HubConnection? _connection;
+
+    private readonly Dictionary<string, QueueStatus> _statuses = new();
+
+    //private readonly HashSet<string> _highlighted = [];
+    private readonly ConcurrentDictionary<string, QueueStatus> _highlighted = new(); //threadSafe
+
+    private CancellationTokenSource? _refreshLoopCancellationTokenSource;
+
+    private readonly ConcurrentDictionary<string, List<string>> _unitGroups = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["kantin"] = new List<string> { "Acil Servis", "Ortopedi", "K.B.B.", "Göz", "Dahiliye" }
+    };
+
+    private string _cardSize = "col-12 col-md-6 col-lg-4 col-xl-3";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _refreshLoopCancellationTokenSource = new CancellationTokenSource();
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        _connection = new HubConnectionBuilder()
+            .WithUrl("http://localhost:1771/hub")
+            .WithAutomaticReconnect()
+            .Build();
+
+        _connection.On<QueueUpdateDto>("QueueUpdate", update =>
+        {
+            if (_statuses.TryGetValue(update.UnitName, out var existing))
+            {
+                _statuses[update.UnitName] = existing with
+                {
+                    LastCalledTicketNumber = update.LastCalledTicketNumber ?? "",
+                    LastCalledPatientName = update.LastCalledPatientName ?? "",
+                    LastCalledTickedTime = update.LastCalledTickedTime
+                };
+                //_highlighted.Add(update.UnitName);
+                _highlighted[update.UnitName] = _statuses[update.UnitName]; //threadSafe
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(5000);
+                    _highlighted.TryRemove(update.UnitName, out _); //threadSafe
+                    //_highlighted.Remove(update.UnitName);
+                    await InvokeAsync(StateHasChanged);
+                });
+            }
+
+            InvokeAsync(StateHasChanged);
+        });
+
+        await _connection.StartAsync();
+        var result = await _connection.InvokeAsync<List<QueueStatus>>("GetInitialState");
+
+        if (query.TryGetValue("grp", out var grpValue))
+        {
+            if (_unitGroups.TryGetValue(grpValue.ToString().ToLower(), out var allovedUnits))
+            {
+                result = result.Where(x => allovedUnits.Any(prefix => x.UnitName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))).ToList();
+            }
+        }
+
+        foreach (var item in result)
+        {
+            _statuses[item.UnitName] = item;
+        }
+
+        if (query.TryGetValue("card-size", out var size))
+        {
+            _cardSize = size.ToString().ToLower() switch
+            {
+                "xxl" => "col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 col-xxl-12",
+                "xl" => "col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 col-xxl-6",
+                "lg" => "col-12 col-sm-12 col-md-12 col-lg-12 col-xl-6  col-xxl-6",
+                "md" => "col-12 col-sm-12 col-md-12 col-lg-6  col-xl-6  col-xxl-4",
+                "sm" => "col-12 col-sm-6  col-md-4  col-lg-4  col-xl-3  col-xxl-3",
+                _ => "col-12 col-sm-12 col-md-12 col-lg-6  col-xl-6  col-xxl-4"
+            };
+        }
+
+        _ = RefreshLoopAsync(_refreshLoopCancellationTokenSource.Token);
+    }
+
+    public static string ToTitleCase(string input)
+    {
+        return CultureInfo.CurrentUICulture.TextInfo.ToTitleCase(input.ToLower());
+    }
+
+    string MaskName(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+            return string.Empty;
+        // Split the full name into parts and mask the first and last names
+        var parts = fullName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+            return string.Empty;
+
+        string Mask(string part)
+        {
+            return char.ToUpper(part[0]) + "*";
+        }
+
+        var first = Mask(parts[0]);
+        var last = parts.Length > 1 ? Mask(parts[^1]) : string.Empty;
+
+        return string.IsNullOrEmpty(last) ? first : $"{first} {last}";
+    }
+
+    //public record QueueStatus(string UnitName, string ResponsibleStaffGender, string ResponsibleStaff, string LastCalledTicketNumber, string LastCalledPatientName, DateTime LastCalledTickedTime);
+
+    //public record QueueUpdateDto(string UnitName, string? LastCalledTicketNumber, string? LastCalledPatientName, DateTime LastCalledTickedTime);
+    private async Task RefreshLoopAsync(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested)
+        {
+            var now = DateTime.Now;
+            var todayEight = now.Date.AddHours(8);
+            var todayNineThirty = now.Date.AddHours(9).AddMinutes(30);
+
+            TimeSpan interval;
+
+            if (now >= todayEight && now < todayNineThirty) interval = TimeSpan.FromMinutes(10);
+            else interval = TimeSpan.FromHours(1);
+
+            //konsoldan takip edebilmek için interval bilgisini konsola yaz
+            await Js.InvokeVoidAsync("console.log", $"[Timer] Next refresh in: {interval.TotalMinutes} minutes");
+
+            try
+            {
+                await Task.Delay(interval, token);
+            }
+            catch (TaskCanceledException)
+            {
+                await Js.InvokeVoidAsync("console.log", "[Timer] Refresh Loop Cancelled");
+                // Task was cancelled, exit the loop
+                break;
+            }
+
+            await InvokeAsync(() => { NavigationManager.NavigateTo(NavigationManager.Uri, true); });
+        }
+    }
+
+    public void Dispose()
+    {
+        _refreshLoopCancellationTokenSource?.Cancel();
+        _refreshLoopCancellationTokenSource?.Dispose();
+        _connection?.DisposeAsync();
+    }
+
+}

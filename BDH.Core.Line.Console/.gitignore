@@ -1,0 +1,13 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.vs/
+*.vscode/
+*.DS_Store
+# IDE
+.vs/
+# Logs
+*.log
+appsettings.*.json

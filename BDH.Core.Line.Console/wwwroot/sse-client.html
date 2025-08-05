@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SSE Monitor</title>
+</head>
+<body>
+<h2>SSE Dinleyici</h2>
+<pre id="log"></pre>
+
+<script>
+    const log = document.getElementById("log");
+
+    const evtSource = new EventSource("http://localhost:5000/events"); // Gerekirse IP değiştir
+    evtSource.onopen = function (event) {
+        log.textContent += "[BAĞLANTI AÇILDI] SSE bağlantısı kuruldu.\n";
+        console.log("[BAĞLANTI AÇILDI]SSE bağlantısı kuruldu.");
+    };
+    evtSource.onerror = function (err) {
+        log.textContent += "[HATA] SSE bağlantısı kurulamadı.\n";
+        console.log("[HATA] SSE bağlantısı kurulamadı.");
+    };
+    evtSource.onmessage = function (event) {
+        const now = new Date().toLocaleTimeString();
+        log.textContent += `[${now}] ${event.data}\n`;
+        console.log(event.data);
+    };
+
+    /*
+        evtSource.onmessage = function (event) {
+            const now = new Date().toLocaleTimeString();
+            log.textContent += [${now}] ${event.data}\n;
+        };
+
+        evtSource.onerror = function (err) {
+            log.textContent += "[HATA] SSE bağlantısı koptu.\n";
+    };
+    */
+</script>
+</body>
+</html>

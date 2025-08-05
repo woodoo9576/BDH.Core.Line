@@ -1,0 +1,63 @@
+﻿@page "/"
+@using BDH.Core.Line.Console.Shared
+@namespace SignalR_DbMonitor_ConsoleApp.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Poliklinik Kuyruğu</title>
+    <base href="~/" />
+   <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+     @*<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">*@
+    <link rel="stylesheet" href="css/bootstrap/bootstrap-icons/bootstrap-icons.css"/>
+    
+    <style>
+        .highlight {
+            background-color: orangered !important;
+        }
+
+        td {
+            transition: background-color 2s ease-out;
+        }
+
+        div {
+            transition: background-color 2s ease-out;
+        }
+
+        span {
+            transition: background-color 2s ease-out;
+        }
+
+        .appointment-card {
+            /*aspect-ratio: 4 / 2;*/
+            background-color: #657FCE;
+            border: none;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .doctor-img {
+            width: 48px;
+            height: 48px;
+            object-fit: cover;
+            border: 2px solid white;
+        }
+    </style>
+</head>
+<body>
+<app>
+    <component type="typeof(App)" render-mode="ServerPrerendered" />
+</app>
+
+@* ReSharper disable once Html.PathError *@
+<script src="_framework/blazor.server.js"></script>
+</body>
+</html>
