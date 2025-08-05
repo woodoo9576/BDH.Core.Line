@@ -10,7 +10,6 @@
 <div class="row g-4 mt-2">
     @foreach (var a in _statuses.Values)
     {
-        //var highlight = _highlighted.Contains(a.UnitName) ? "highlight" : "";
         var highlight = _highlighted.ContainsKey(a.UnitName) ? "highlight" : ""; //threadSafe
         var gender = a.ResponsibleStaffGender;
         var responsibleStaffGenderUrl = gender == "E"
@@ -175,9 +174,7 @@
         return string.IsNullOrEmpty(last) ? first : $"{first} {last}";
     }
 
-    //public record QueueStatus(string UnitName, string ResponsibleStaffGender, string ResponsibleStaff, string LastCalledTicketNumber, string LastCalledPatientName, DateTime LastCalledTickedTime);
 
-    //public record QueueUpdateDto(string UnitName, string? LastCalledTicketNumber, string? LastCalledPatientName, DateTime LastCalledTickedTime);
     private async Task RefreshLoopAsync(CancellationToken token)
     {
         while (!token.IsCancellationRequested)
