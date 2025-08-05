@@ -1,64 +1,64 @@
 # BDH.Core.Line.Console
 
-## Proje Hakkında
+## Proje HakkÄ±nda
 
-Bu sistem, hastane ortamında kullanılan, Panates firmasının Abisena isimli HBYS (Hastane Bilgi Yönetim Sistemi) uygulaması baz alınarak geliştirilmiştir.  
-Oracle veritabanı üzerinde SQL, DCN, trigger, Notification, Oracle AQ (Advanced Queuing) ve SQLDependency gibi teknolojiler kullanılmıştır.  
-Sistem, başka otomasyon uygulamaları için veritabanında değişiklikler yapıldığında da çalışabilir ve esnek bir entegrasyon sunar.
+Bu sistem, hastane ortamÄ±nda kullanÄ±lan, Panates firmasÄ±nÄ±n Abisena isimli HBYS (Hastane Bilgi YÃ¶netim Sistemi) uygulamasÄ± baz alÄ±narak geliÅŸtirilmiÅŸtir.  
+Oracle veritabanÄ± Ã¼zerinde SQL, DCN, trigger, Notification, Oracle AQ (Advanced Queuing) ve SQLDependency gibi teknolojiler kullanÄ±lmÄ±ÅŸtÄ±r.  
+Sistem, baÅŸka otomasyon uygulamalarÄ± iÃ§in veritabanÄ±nda deÄŸiÅŸiklikler yapÄ±ldÄ±ÄŸÄ±nda da Ã§alÄ±ÅŸabilir ve esnek bir entegrasyon sunar.
 
-## Özellikler
+## Ã–zellikler
 
-- Gerçek zamanlı hasta çağrı ve sıra takibi
-- SignalR ile canlı veri yayını
-- SSE ile alternatif veri yayını
-- Oracle veritabanı entegrasyonu
-- Sağlık durumu (health check) endpoint'i
-- Merkezi konfigürasyon yönetimi (appsettings.json)
-- Modern .NET 9 ve C# 13 kod yapısı
+- GerÃ§ek zamanlÄ± hasta Ã§aÄŸrÄ± ve sÄ±ra takibi
+- SignalR ile canlÄ± veri yayÄ±nÄ±
+- SSE ile alternatif veri yayÄ±nÄ±
+- Oracle veritabanÄ± entegrasyonu
+- SaÄŸlÄ±k durumu (health check) endpoint'i
+- Merkezi konfigÃ¼rasyon yÃ¶netimi (appsettings.json)
+- Modern .NET 9 ve C# 13 kod yapÄ±sÄ±
 
 ## Kurulum
 
-1. **Bağımlılıklar:**  
+1. **BaÄŸÄ±mlÄ±lÄ±klar:**  
    - .NET 9 SDK
    - Oracle.ManagedDataAccess.Client NuGet paketi
 
-2. **Veritabanı Ayarları:**  
-   - `appsettings.json` dosyasındaki `ConnectionStrings:OracleDb` alanını kendi veritabanı bilgilerinizle doldurun.
-   - Örnek:
+2. **VeritabanÄ± AyarlarÄ±:**  
+   - `appsettings.json` dosyasÄ±ndaki `ConnectionStrings:OracleDb` alanÄ±nÄ± kendi veritabanÄ± bilgilerinizle doldurun.
+   - Ã–rnek:
      ```
      "ConnectionStrings": {
-       "OracleDb": "User Id=KULLANICI;Password=ŞİFRE;Data Source=IP:PORT/SERVIS"
+       "OracleDb": "User Id=KULLANICI;Password=ÅÄ°FRE;Data Source=IP:PORT/SERVIS"
      }
      ```
-     > Not: `appsettings.json` dosyası hassas bilgiler içerdiği için repoya eklenmemiştir. Lütfen `appsettings.json.example` dosyasını kopyalayıp kendi ayarlarınızı girerek `appsettings.json` olarak kaydedin.
-3. **Projeyi Derleyin ve Çalıştırın:**
+     > Not: `appsettings.json` dosyasÄ± hassas bilgiler iÃ§erdiÄŸi iÃ§in repoya eklenmemiÅŸtir. LÃ¼tfen `appsettings.json.example` dosyasÄ±nÄ± kopyalayÄ±p kendi ayarlarÄ±nÄ±zÄ± girerek `appsettings.json` olarak kaydedin.
+3. **Projeyi Derleyin ve Ã‡alÄ±ÅŸtÄ±rÄ±n:**
 
-4. **Uygulamayı Açın:**  
-- Varsayılan olarak [http://localhost:1771/queue](http://localhost:1771/queue) adresinden erişebilirsiniz.
+4. **UygulamayÄ± AÃ§Ä±n:**  
+- VarsayÄ±lan olarak [http://localhost:1771/queue](http://localhost:1771/queue) adresinden eriÅŸebilirsiniz.
 
-## Konfigürasyon
+## KonfigÃ¼rasyon
 
-Tüm ayarlar `appsettings.json` dosyasından yönetilir.
+TÃ¼m ayarlar `appsettings.json` dosyasÄ±ndan yÃ¶netilir.
 
-## Sağlık Kontrolü
+## SaÄŸlÄ±k KontrolÃ¼
 
-Uygulamanın sağlık durumunu kontrol etmek için:
-- [http://localhost:1771/health](http://localhost:1771/health) adresini ziyaret edebilirsiniz. Bu endpoint, uygulamanın çalışır durumda olup olmadığını gösterir.
-Bu endpoint, veritabanı, SignalR ve SSE servislerinin durumunu JSON olarak döner.
+UygulamanÄ±n saÄŸlÄ±k durumunu kontrol etmek iÃ§in:
+- [http://localhost:1771/health](http://localhost:1771/health) adresini ziyaret edebilirsiniz. Bu endpoint, uygulamanÄ±n Ã§alÄ±ÅŸÄ±r durumda olup olmadÄ±ÄŸÄ±nÄ± gÃ¶sterir.
+Bu endpoint, veritabanÄ±, SignalR ve SSE servislerinin durumunu JSON olarak dÃ¶ner.
 
-## Katkı ve Geliştirme
+## KatkÄ± ve GeliÅŸtirme
 
-- Kodunuzu düzenli ve açıklamalı tutun.
-- Yeni özellikler için branch açarak katkıda bulunun.
-- Pull request göndermeden önce kodun derlendiğinden ve test edildiğinden emin olun.
+- Kodunuzu dÃ¼zenli ve aÃ§Ä±klamalÄ± tutun.
+- Yeni Ã¶zellikler iÃ§in branch aÃ§arak katkÄ±da bulunun.
+- Pull request gÃ¶ndermeden Ã¶nce kodun derlendiÄŸinden ve test edildiÄŸinden emin olun.
 
 ## Lisans
 
-Bu proje MIT lisansı ile yayınlanmıştır.  
-Daha fazla bilgi için `LICENSE` dosyasına bakınız.
+Bu proje Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0) lisansÄ± ile yayÄ±nlanmÄ±ÅŸtÄ±r.  
+Daha fazla bilgi iÃ§in `LICENSE` dosyasÄ±na bakÄ±nÄ±z.
 
 ---
 
 **Not:**  
-Gerçek veritabanı şifreleri ve hassas bilgileri paylaşmayınız.  
-Sorularınız veya katkılarınız için GitHub Issues üzerinden iletişime geçebilirsiniz.
+GerÃ§ek veritabanÄ± ÅŸifreleri ve hassas bilgileri paylaÅŸmayÄ±nÄ±z.  
+SorularÄ±nÄ±z veya katkÄ±larÄ±nÄ±z iÃ§in GitHub Issues Ã¼zerinden iletiÅŸime geÃ§ebilirsiniz.
