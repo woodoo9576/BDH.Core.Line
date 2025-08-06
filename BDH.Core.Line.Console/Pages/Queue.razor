@@ -10,8 +10,7 @@
 <div class="row g-4 mt-2">
     @foreach (var a in _statuses.Values)
     {
-        //var highlight = _highlighted.Contains(a.UnitName) ? "highlight" : "";
-        var highlight = _highlighted.ContainsKey(a.UnitName) ? "highlight" : ""; //threadSafe
+        var highlight = _highlighted.ContainsKey(a.UnitName) ? "highlight" : ""; 
         var gender = a.ResponsibleStaffGender;
         var responsibleStaffGenderUrl = gender == "E"
             ? "img/male.png"
@@ -26,7 +25,6 @@
                             <h6 class="mb-0 fw-semibold text-white text-nowrap">@ToTitleCase(a.ResponsibleStaff)</h6>
                             <small class="text-white-50 text-nowrap">@ToTitleCase(a.UnitName)</small>
                         </div>
-                        @* <a href="#" class="btn btn-outline-light btn-sm ms-2">View</a> *@
                         <button type="button" class="btn btn-outline-light btn-sm ms-2 rounded-circle p-2">
                             <i class="bi bi-person-badge"></i>
                         </button>
@@ -72,10 +70,12 @@
 
     private readonly Dictionary<string, QueueStatus> _statuses = new();
 
-    //private readonly HashSet<string> _highlighted = [];
-    private readonly ConcurrentDictionary<string, QueueStatus> _highlighted = new(); //threadSafe
+    private readonly ConcurrentDictionary<string, QueueStatus> _highlighted = new(); 
 
     private CancellationTokenSource? _refreshLoopCancellationTokenSource;
+    private bool _shouldPlaySound = false;
+    private bool _pendingSpeakText = false;
+    private string? _pendingTextToSpeak;
 
     private readonly ConcurrentDictionary<string, List<string>> _unitGroups = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -94,7 +94,7 @@
             .WithAutomaticReconnect()
             .Build();
 
-        _connection.On<QueueUpdateDto>("QueueUpdate", update =>
+        _connection.On<QueueUpdateDto>("QueueUpdate", async update =>
         {
             if (_statuses.TryGetValue(update.UnitName, out var existing))
             {
@@ -104,18 +104,21 @@
                     LastCalledPatientName = update.LastCalledPatientName ?? "",
                     LastCalledTickedTime = update.LastCalledTickedTime
                 };
-                //_highlighted.Add(update.UnitName);
-                _highlighted[update.UnitName] = _statuses[update.UnitName]; //threadSafe
+                _highlighted[update.UnitName] = _statuses[update.UnitName]; 
                 _ = Task.Run(async () =>
                 {
                     await Task.Delay(5000);
-                    _highlighted.TryRemove(update.UnitName, out _); //threadSafe
-                    //_highlighted.Remove(update.UnitName);
+                    _highlighted.TryRemove(update.UnitName, out _); 
+                    
                     await InvokeAsync(StateHasChanged);
                 });
             }
+            //_shouldPlaySound = true;
+            _pendingSpeakText = true;
+            _pendingTextToSpeak = $"{update.UnitName} son numara {update.LastCalledTicketNumber}";
 
-            InvokeAsync(StateHasChanged);
+            
+            await InvokeAsync(StateHasChanged);
         });
 
         await _connection.StartAsync();
@@ -150,6 +153,46 @@
         _ = RefreshLoopAsync(_refreshLoopCancellationTokenSource.Token);
     }
 
+    #region Overrides of ComponentBase
+
+    /// <summary>
+    /// Method invoked after each time the component has been rendered interactively and the UI has finished
+    /// updating (for example, after elements have been added to the browser DOM). Any <see cref="T:Microsoft.AspNetCore.Components.ElementReference" />
+    /// fields will be populated by the time this runs.
+    /// This method is not invoked during prerendering or server-side rendering, because those processes
+    /// are not attached to any live browser DOM and are already complete before the DOM is updated.
+    /// Note that the component does not automatically re-render after the completion of any returned <see cref="T:System.Threading.Tasks.Task" />,
+    /// because that would cause an infinite render loop.
+    /// </summary>
+    /// <param name="firstRender">
+    /// Set to <c>true</c> if this is the first time <see cref="M:Microsoft.AspNetCore.Components.ComponentBase.OnAfterRender(System.Boolean)" /> has been invoked
+    /// on this component instance; otherwise <c>false</c>.
+    /// </param>
+    /// <returns>A <see cref="T:System.Threading.Tasks.Task" /> representing any asynchronous operation.</returns>
+    /// <remarks>
+    /// The <see cref="M:Microsoft.AspNetCore.Components.ComponentBase.OnAfterRender(System.Boolean)" /> and <see cref="M:Microsoft.AspNetCore.Components.ComponentBase.OnAfterRenderAsync(System.Boolean)" /> lifecycle methods
+    /// are useful for performing interop, or interacting with values received from <c>@ref</c>.
+    /// Use the <paramref name="firstRender" /> parameter to ensure that initialization work is only performed
+    /// once.
+    /// </remarks>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        //return base.OnAfterRenderAsync(firstRender);
+        if (_shouldPlaySound)
+        {
+            _shouldPlaySound = false;
+            await Js.InvokeVoidAsync("playUpdatedSound");
+        }
+        if (_pendingSpeakText)
+        {
+            _pendingSpeakText = false;
+            await Js.InvokeVoidAsync("speakText", _pendingTextToSpeak);
+            
+        }
+    }
+
+    #endregion
+
     public static string ToTitleCase(string input)
     {
         return CultureInfo.CurrentUICulture.TextInfo.ToTitleCase(input.ToLower());
@@ -178,7 +221,7 @@
     //public record QueueStatus(string UnitName, string ResponsibleStaffGender, string ResponsibleStaff, string LastCalledTicketNumber, string LastCalledPatientName, DateTime LastCalledTickedTime);
 
     //public record QueueUpdateDto(string UnitName, string? LastCalledTicketNumber, string? LastCalledPatientName, DateTime LastCalledTickedTime);
-    private async Task RefreshLoopAsync(CancellationToken token)
+    internal async Task RefreshLoopAsync(CancellationToken token)
     {
         while (!token.IsCancellationRequested)
         {
