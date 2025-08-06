@@ -218,10 +218,8 @@
         return string.IsNullOrEmpty(last) ? first : $"{first} {last}";
     }
 
-    //public record QueueStatus(string UnitName, string ResponsibleStaffGender, string ResponsibleStaff, string LastCalledTicketNumber, string LastCalledPatientName, DateTime LastCalledTickedTime);
 
-    //public record QueueUpdateDto(string UnitName, string? LastCalledTicketNumber, string? LastCalledPatientName, DateTime LastCalledTickedTime);
-    internal async Task RefreshLoopAsync(CancellationToken token)
+    private async Task RefreshLoopAsync(CancellationToken token)
     {
         while (!token.IsCancellationRequested)
         {
