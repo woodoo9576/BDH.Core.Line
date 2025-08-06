@@ -30,7 +30,7 @@
                         </button>
                     </div>
 
-                    <hr class="my-2 border-white-50"/>
+                    <hr class="my-2"/>
 
                     <!-- Alt Bölüm -->
                     <div class="text-white">
@@ -73,9 +73,10 @@
     private readonly ConcurrentDictionary<string, QueueStatus> _highlighted = new(); 
 
     private CancellationTokenSource? _refreshLoopCancellationTokenSource;
-    private bool _shouldPlaySound = false;
-    private bool _pendingSpeakText = false;
-    private string? _pendingTextToSpeak;
+    //private bool _shouldPlaySound;
+    //private bool _pendingSpeakText = false;
+    //private string? _pendingTextToSpeak;
+    private readonly Queue<string> _pendingSpeakQueue = new();
 
     private readonly ConcurrentDictionary<string, List<string>> _unitGroups = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -109,15 +110,16 @@
                 {
                     await Task.Delay(5000);
                     _highlighted.TryRemove(update.UnitName, out _); 
-                    
+
                     await InvokeAsync(StateHasChanged);
                 });
             }
             //_shouldPlaySound = true;
-            _pendingSpeakText = true;
-            _pendingTextToSpeak = $"{update.UnitName} son numara {update.LastCalledTicketNumber}";
+            //_pendingSpeakText = true;
+            //_pendingTextToSpeak = $"{update.UnitName} son numara {update.LastCalledTicketNumber}";
+            _pendingSpeakQueue.Enqueue($"{update.UnitName} son numara {update.LastCalledTicketNumber}");
 
-            
+
             await InvokeAsync(StateHasChanged);
         });
 
@@ -177,16 +179,31 @@
     /// </remarks>
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        @*
         //return base.OnAfterRenderAsync(firstRender);
         if (_shouldPlaySound)
         {
             _shouldPlaySound = false;
             await Js.InvokeVoidAsync("playUpdatedSound");
         }
+        
+        
+        
         if (_pendingSpeakText)
         {
             _pendingSpeakText = false;
             await Js.InvokeVoidAsync("speakText", _pendingTextToSpeak);
+
+        }
+        *@
+
+        while (_pendingSpeakQueue.Count > 0)
+        {
+            var text = _pendingSpeakQueue.Dequeue();
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                await Js.InvokeVoidAsync("speakText", text);
+            }
             
         }
     }

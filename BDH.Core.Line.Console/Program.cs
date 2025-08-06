@@ -301,3 +301,18 @@ internal class StartupOptions
     public string SseEvents { get; set; } = "/events";
 }
 #endregion
+
+#region Enums
+internal enum StaffGender
+{
+    Male, //E
+    Female //K
+}
+
+internal enum HealthStatus
+{
+    Healthy,
+    Unhealthy,
+    NoData
+}
+#endregion
