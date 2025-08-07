@@ -19,11 +19,13 @@ window.processSpeechQueue = function () {
     }
     window.speechActive = true;
     const text = window.speechQueue.shift();
-    const utterance = new SpeechSynthesisUtterance(text);
+    const utterance = new window.SpeechSynthesisUtterance(text);
     utterance.lang = 'tr-TR';
     utterance.rate = 0.7;
     const voices = window.speechSynthesis.getVoices();
+    
     const selectedVoice = voices.find(v => v.lang === 'tr-TR');
+    //const selectedVoice = voices[310];
     if (selectedVoice) {
         utterance.voice = selectedVoice;
     }
