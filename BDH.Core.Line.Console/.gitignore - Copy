@@ -11,4 +11,3 @@ obj/
 # Logs
 *.log
 appsettings.*.json
-appsettings.json

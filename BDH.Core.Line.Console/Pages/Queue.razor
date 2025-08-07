@@ -204,7 +204,7 @@
             {
                 await Js.InvokeVoidAsync("speakText", text);
             }
-            
+
         }
     }
 
@@ -243,14 +243,15 @@
             var now = DateTime.Now;
             var todayEight = now.Date.AddHours(8);
             var todayNineThirty = now.Date.AddHours(9).AddMinutes(30);
+            var todayTenThirty = now.Date.AddHours(10).AddMinutes(30);
 
-            TimeSpan interval;
-
+            TimeSpan interval = TimeSpan.FromHours(1);
             if (now >= todayEight && now < todayNineThirty) interval = TimeSpan.FromMinutes(10);
-            else interval = TimeSpan.FromHours(1);
+            if (now >= todayNineThirty && now < todayTenThirty) interval = TimeSpan.FromMinutes(20);
+            
 
             //konsoldan takip edebilmek için interval bilgisini konsola yaz
-            await Js.InvokeVoidAsync("console.log", $"[Timer] Next refresh in: {interval.TotalMinutes} minutes");
+            await Js.InvokeVoidAsync("console.log", $"[Timer:Now:{now:g}] Next refresh in: {interval.TotalMinutes} minutes");
 
             try
             {
